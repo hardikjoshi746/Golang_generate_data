@@ -24,7 +24,6 @@ This project implements a high-performance REST API in Go that:
 
 - **Go (Gin)** – Lightweight, high-performance web framework.
 - **MySQL** – Persistent storage for user quotas and request history.
-- **Redis** *(Optional for performance optimization)* – Can be added for caching responses or quota tracking.
 - **Docker** – Containerized for portability and reproducibility.
 - **Postman** – Used for manual testing.
 
