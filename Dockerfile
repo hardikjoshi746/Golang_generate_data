@@ -1,31 +1,26 @@
-
-# Use official Golang image as builder
-FROM golang:1.22.5 AS builder
+# Stage 1: Build the Go binary
+FROM golang:1.22 as builder
 
 WORKDIR /app
 
-# Copy go mod and sum files
-COPY go.mod go.sum ./
-
-# Download dependencies
+# Copy go mod and download dependencies
+COPY go.mod ./
 RUN go mod download
 
-# Copy the rest of the application code
+# Copy source code
 COPY . .
 
-# Build the Go app
-RUN go build -o main .
+# Build the Go binary
+RUN go build -o main main.go
 
-# Use a minimal base image for final binary
-FROM alpine:latest
+# Stage 2: Create a minimal runtime image
+FROM gcr.io/distroless/base-debian12
 
-WORKDIR /root/
+WORKDIR /app
 
-# Copy binary from builder
 COPY --from=builder /app/main .
 
-# Expose port used by your app
 EXPOSE 8080
 
-# Run the Go app
-CMD ["./main"]
+# Run the binary
+CMD ["/app/main"]

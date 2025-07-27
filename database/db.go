@@ -25,8 +25,16 @@ func InitDB() {
 		log.Fatal("cannot connect to database:", err) // if the connection fails the complete app stops
 	}
 
-	if err = DB.Ping(); err != nil {
-		log.Fatal("database not responding:", err) // if the connection fails the complete app stops
+	for i := 0; i < 10; i++ {
+		err = DB.Ping()
+		if err == nil {
+			break
+		}
+		log.Printf("Waiting for database... (%d/10)\n", i+1)
+		time.Sleep(2 * time.Second)
+	}
+	if err != nil {
+		log.Fatal("Database not responding after 10 tries:", err)
 	}
 
 	DB.SetMaxOpenConns(1000)

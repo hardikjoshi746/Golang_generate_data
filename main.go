@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hardikjoshi746/Golang_generate_data/config"
 	"github.com/hardikjoshi746/Golang_generate_data/database"
 	"github.com/hardikjoshi746/Golang_generate_data/handlers"
 	"github.com/hardikjoshi746/Golang_generate_data/redis"
@@ -30,7 +31,8 @@ func main() {
 		c.JSON(200, gin.H{"redis_value": val})
 	})
 
-	server.Run(":8080")
+	cfg := config.Load()
+	server.Run(":" + cfg.ServerPort)
 
 }
 

@@ -1,42 +1,37 @@
 version: '3.8'
 
 services:
+  app:
+    build: .
+    container_name: golang_app
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+      - redis
+
   mysql:
     image: mysql:8.0
     container_name: mysql_container
     restart: always
+    ports:
+      - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: yourpassword
       MYSQL_DATABASE: golang_db
       MYSQL_USER: youruser
       MYSQL_PASSWORD: yourpassword
-    ports:
-      - "3307:3306"  # <--- Changed from 3306 to 3307
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
     image: redis:alpine
     container_name: redis_container
     ports:
       - "6379:6379"
-
-  app:
-    build: .
-    container_name: golang_app
-    ports:
-      - "8080:8080"
-    depends_on:
-      - mysql
-      - redis
-    environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: youruser
-      DB_PASSWORD: yourpassword
-      DB_NAME: golang_db
-      REDIS_ADDR: redis:6379
 
 volumes:
   mysql_data:
