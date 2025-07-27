@@ -1,82 +1,178 @@
+
 # Golang Generate Data API – Manifold Labs Takehome Project
 
 ## Overview
 
-This project implements a high-performance REST API in Go that:
-- Accepts POST requests from users.
-- Simulates a random delay (100ms to 50,000ms).
-- Generates word data proportional to the delay.
-- Tracks user quotas in a MySQL database.
-- Supports 5000+ concurrent requests reliably.
+This high-performance REST API accepts data generation requests, simulates a variable delay, tracks word usage per user, and enforces user quotas.
+
+Built with **Go**, **MySQL**, and **Redis**, the app supports over **5000 concurrent requests**, includes data persistence, and is fully containerized.
+
+---
 
 ## Features
 
 - `POST /generate-data`  
-  Generates and returns user-specific data based on a simulated delay. Tracks usage quotas.
+  Simulates word generation based on random delay and deducts word quota from users.
 
 - `GET /user/requests`  
-  Returns all requests and data generated for a specific user.
+  Fetches request history for a given user.
 
 - `GET /user/stats`  
-  Returns user statistics like total requests, average delay, words used, and words left.
+  Returns statistics like total requests, words used, and average delay.
 
-## Tech Stack
-
-- **Go (Gin)** – Lightweight, high-performance web framework.
-- **MySQL** – Persistent storage for user quotas and request history.
-- **Docker** – Containerized for portability and reproducibility.
-- **Postman** – Used for manual testing.
+---
 
 ## Database Schema
 
-### `users`
-| user_id | word_used | word_left | created_at |
-|---------|-----------|-----------|------------|
+### `users`  
+Tracks each user's word usage.
 
-### `requests`
-| id (PK) | user_id (FK) | data (TEXT) | duration (ms) | created_at |
-|---------|--------------|-------------|---------------|------------|
+| Column     | Type         | Notes                     |
+|------------|--------------|---------------------------|
+| user_id    | VARCHAR      | Primary Key               |
+| word_used  | INT          | Increments per request    |
+| words_left | INT          | Starts at 1,000,000       |
+| created_at | TIMESTAMP    | Defaults to now           |
 
+### `requests`  
+Stores request history and timing.
+
+| Column     | Type         | Notes                     |
+|------------|--------------|---------------------------|
+| id         | INT (auto)   | Primary Key               |
+| user_id    | VARCHAR      | Foreign Key to `users`    |
+| data       | TEXT         | Generated words           |
+| duration   | INT          | Simulated delay in ms     |
+| created_at | TIMESTAMP    | Defaults to now           |
+
+---
 
 ## Business Logic
 
-- Each user starts with **1,000,000 word quota**.
-- Each request consumes `delay(ms) / 6` words.
-- If the user exceeds their quota, the request is **rejected**.
-- All word usage is transaction-safe via `FOR UPDATE` row locks to prevent race conditions.
+- Each user starts with **1,000,000** word quota.
+- A request incurs a **random delay (100–50,000ms)**.
+- Words generated = `delay / 6` (approx. 15 words/ms).
+- If the user doesn't have enough words left, the request is rejected.
+- All DB writes are **transactional with row locking**.
 
-## Quantitative Outcomes
+---
 
-- **Load Test @ 2000 Requests, 500 Concurrency**  
-Success: 2000
-Failures: 0
-Total time: ~2m4s
-Avg per req: ~66ms
+## Tech Stack
 
+- **Go (Gin)** — High-performance REST framework
+- **MySQL** — Persistent request and user quota store
+- **Redis** — Caching layer for user word balance
+- **Docker** — Containerization for all services
 
-- **Load Test @ 5000 Requests, 1000 Concurrency**  
-Success: 5000
-Failures: 0
-Total time: ~2m39s
-Avg per req: ~31.94ms
+---
 
+## Folder Structure
 
-- Scales to **5000+ concurrent** users with proper DB connection tuning.
-
-## Running the App
-
-### 1. Start MySQL locally or via Docker
-Make sure you have a running MySQL instance.
-
-### 2. Run the application
-
-```bash
-go run main.go
 ```
-3. Run the load test (optional)
-```bash
-go run load_test_main.go
+.
+├── main.go               # Entry point
+├── handlers/             # Route handlers
+├── database/             # MySQL logic
+├── redis/                # Redis init
+├── config/               # .env reader
+├── Dockerfile
+├── docker-compose.yml
+├── .env
+└── init.sql              # DB bootstrap
 ```
 
+---
 
-👤 Hardik Joshi
+## Running the App (Dockerized)
+
+### 1. Clone the Repo
+
+```bash
+git clone https://github.com/yourusername/golang-generate-data
+cd golang-generate-data
+```
+
+### 2. Set Up Environment
+
+Create a `.env` file:
+
+```env
+DB_HOST=mysql
+DB_PORT=3306
+DB_USER=youruser
+DB_PASSWORD=yourpassword
+DB_NAME=golang_db
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+SERVER_PORT=8080
+ENVIRONMENT=production
+```
+
+### 3. Start Everything
+
+```bash
+docker-compose up --build
+```
+
+### 4. Test Health Check
+
+```bash
+curl http://localhost:8080/health
+```
+
+---
+
+## 🔍 API Examples
+
+### ▶️ Generate Data
+
+```bash
+curl -X POST http://localhost:8080/generate-data   -H "X-User-id: 123"
+```
+
+### 📜 User Request History
+
+```bash
+curl -X GET http://localhost:8080/user/requests   -H "X-User-id: 123"
+```
+
+### 📊 User Stats
+
+```bash
+curl -X GET http://localhost:8080/user/stats   -H "X-User-id: 123"
+```
+
+---
+
+## Performance
+
+The API is optimized to handle high concurrency using:
+
+- Gin’s goroutine-friendly handler model
+- MySQL connection pooling
+- Redis caching of frequently accessed values
+- Transaction-safe quota enforcement
+
+### Load Test Results
+
+| Scenario                     | Requests | Concurrency | Avg Time | Success Rate |
+|-----------------------------|----------|-------------|----------|--------------|
+| Moderate load               | 2000     | 500         | ~66ms    | 100%         |
+| Heavy load                  | 5000     | 1000        | ~32ms    | 100%         |
+
+---
+
+## Manual Testing
+
+You can also use [Postman](https://www.postman.com/) or cURL to interact with endpoints using the `X-User-id` header.
+
+
+
+## Author
+
+**Hardik Joshi**
+
