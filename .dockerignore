@@ -1,0 +1,32 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Git
+.git
+.gitignore
+
+# Dependency directories
+vendor/
+node_modules/
+
+# Docker
+.dockerignore
+Dockerfile
+
+# Local config / environment
+.env
+config/config.go
+
+# Editor files
+*.swp
+*.swo
+*.DS_Store
+*.vscode/
+
+# Test logs
+*.log

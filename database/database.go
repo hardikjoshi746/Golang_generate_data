@@ -2,6 +2,10 @@ package database
 
 import (
 	"fmt"
+	"strconv"
+	"time"
+
+	"example.com/rest/redis"
 )
 
 type UserRequest struct {
@@ -109,12 +113,26 @@ func ProcessUserRequestTx(userID string, result string, wordsUsed int, duration 
 }
 
 func GetUserWordBalance(userID string) (int, error) {
-	var wordsLeft int
-	query := `SELECT words_left FROM users WHERE user_id = ?`
-	err := DB.QueryRow(query, userID).Scan(&wordsLeft)
-	if err != nil {
-		return 0, fmt.Errorf("failed to fetch user balance: %v", err)
+	// Check Redis cache first
+	cacheKey := "words_left:" + userID
+	val, err := redis.Rdb.Get(redis.Ctx, cacheKey).Result()
+	if err == nil {
+		fmt.Printf("✅ Cache HIT for key: %s, value: %s\n", cacheKey, val)
+		wordsLeft, _ := strconv.Atoi(val)
+		return wordsLeft, nil
+	} else {
+		fmt.Printf("❌ Cache MISS for key: %s, reason: %v\n", cacheKey, err)
 	}
+
+	// Fallback to DB
+	var wordsLeft int
+	err = DB.QueryRow("SELECT words_left FROM users WHERE user_id = ?", userID).Scan(&wordsLeft)
+	if err != nil {
+		return 0, err
+	}
+
+	// Set cache
+	redis.Rdb.Set(redis.Ctx, cacheKey, wordsLeft, time.Minute*5)
 	return wordsLeft, nil
 }
 
