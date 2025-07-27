@@ -20,7 +20,7 @@ Dockerfile
 
 # Local config / environment
 .env
-config/config.go
+
 
 # Editor files
 *.swp
