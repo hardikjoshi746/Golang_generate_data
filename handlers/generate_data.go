@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"example.com/rest/database"
 	"github.com/gin-gonic/gin"
+	"github.com/hardikjoshi746/Golang_generate_data/database"
 )
 
 func GenerateDataHandler(c *gin.Context) {

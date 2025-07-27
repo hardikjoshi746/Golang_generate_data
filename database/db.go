@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"example.com/rest/config"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/hardikjoshi746/Golang_generate_data/config"
 )
 
 var DB *sql.DB

@@ -3,10 +3,10 @@ package main
 import (
 	"net/http"
 
-	"example.com/rest/database"
-	"example.com/rest/handlers"
-	"example.com/rest/redis"
 	"github.com/gin-gonic/gin"
+	"github.com/hardikjoshi746/Golang_generate_data/database"
+	"github.com/hardikjoshi746/Golang_generate_data/handlers"
+	"github.com/hardikjoshi746/Golang_generate_data/redis"
 )
 
 func main() {

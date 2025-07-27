@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"example.com/rest/redis"
+	"github.com/hardikjoshi746/Golang_generate_data/redis"
 )
 
 type UserRequest struct {

@@ -1,4 +1,4 @@
-module example.com/rest
+module github.com/hardikjoshi746/Golang_generate_data
 
 go 1.22.5
 

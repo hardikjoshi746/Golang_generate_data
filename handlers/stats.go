@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"example.com/rest/database"
 	"github.com/gin-gonic/gin"
+	"github.com/hardikjoshi746/Golang_generate_data/database"
 )
 
 func UserStatsHandler(c *gin.Context) {
