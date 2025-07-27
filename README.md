@@ -36,6 +36,8 @@ This project implements a high-performance REST API in Go that:
 
 ### `requests`
 | id (PK) | user_id (FK) | data (TEXT) | duration (ms) | created_at |
+|---------|--------------|-------------|---------------|------------|
+
 
 ## Business Logic
 
@@ -46,21 +48,21 @@ This project implements a high-performance REST API in Go that:
 
 ## Quantitative Outcomes
 
-- ✅ **Load Test @ 2000 Requests, 500 Concurrency**  
+- **Load Test @ 2000 Requests, 500 Concurrency**  
 Success: 2000
 Failures: 0
 Total time: ~2m4s
 Avg per req: ~66ms
 
 
-- ✅ **Load Test @ 5000 Requests, 1000 Concurrency**  
+- **Load Test @ 5000 Requests, 1000 Concurrency**  
 Success: 5000
 Failures: 0
 Total time: ~2m39s
 Avg per req: ~31.94ms
 
 
-- ⚙️ Scales to **5000+ concurrent** users with proper DB connection tuning.
+- Scales to **5000+ concurrent** users with proper DB connection tuning.
 
 ## Running the App
 
