@@ -1,4 +1,3 @@
-
 # Golang Generate Data API – Manifold Labs Takehome Project
 
 ## Overview
@@ -12,7 +11,7 @@ Built with **Go**, **MySQL**, and **Redis**, the app supports over **5000 concur
 ## Features
 
 - `POST /generate-data`  
-  Simulates word generation based on random delay and deducts word quota from users.
+  Simulates word generation based on random delay and deducts word quota from users. Enforces rate-limiting.
 
 - `GET /user/requests`  
   Fetches request history for a given user.
@@ -39,7 +38,7 @@ Stores request history and timing.
 
 | Column     | Type         | Notes                     |
 |------------|--------------|---------------------------|
-| id         | INT (auto)   | Primary Key               |
+| request_id | INT (auto)   | Primary Key               |
 | user_id    | VARCHAR      | Foreign Key to `users`    |
 | data       | TEXT         | Generated words           |
 | duration   | INT          | Simulated delay in ms     |
@@ -51,8 +50,9 @@ Stores request history and timing.
 
 - Each user starts with **1,000,000** word quota.
 - A request incurs a **random delay (100–50,000ms)**.
-- Words generated = `delay / 6` (approx. 15 words/ms).
+- Words generated = `delay / 100` (10ms = 1 word).
 - If the user doesn't have enough words left, the request is rejected.
+- Rate limiting of **10 requests per minute** enforced via Redis.
 - All DB writes are **transactional with row locking**.
 
 ---
@@ -61,7 +61,7 @@ Stores request history and timing.
 
 - **Go (Gin)** — High-performance REST framework
 - **MySQL** — Persistent request and user quota store
-- **Redis** — Caching layer for user word balance
+- **Redis** — Rate limiter for request throttling
 - **Docker** — Containerization for all services
 
 ---
@@ -73,7 +73,7 @@ Stores request history and timing.
 ├── main.go               # Entry point
 ├── handlers/             # Route handlers
 ├── database/             # MySQL logic
-├── redis/                # Redis init
+├── redis/                # Redis-based rate limiter
 ├── config/               # .env reader
 ├── Dockerfile
 ├── docker-compose.yml
@@ -112,13 +112,15 @@ SERVER_PORT=8080
 ENVIRONMENT=production
 ```
 
+For local development, use `.env.local` with `localhost`.
+
 ### 3. Start Everything
 
 ```bash
 docker-compose up --build
 ```
 
-### 4. Test Health Check
+### 4. Test Health Check (Optional)
 
 ```bash
 curl http://localhost:8080/health
@@ -131,19 +133,19 @@ curl http://localhost:8080/health
 ### ▶️ Generate Data
 
 ```bash
-curl -X POST http://localhost:8080/generate-data   -H "X-User-id: 123"
+curl -X POST http://localhost:8080/generate-data -H "X-User-id: 123"
 ```
 
 ### 📜 User Request History
 
 ```bash
-curl -X GET http://localhost:8080/user/requests   -H "X-User-id: 123"
+curl -X GET http://localhost:8080/user/requests -H "X-User-id: 123"
 ```
 
 ### 📊 User Stats
 
 ```bash
-curl -X GET http://localhost:8080/user/stats   -H "X-User-id: 123"
+curl -X GET http://localhost:8080/user/stats -H "X-User-id: 123"
 ```
 
 ---
@@ -154,7 +156,7 @@ The API is optimized to handle high concurrency using:
 
 - Gin’s goroutine-friendly handler model
 - MySQL connection pooling
-- Redis caching of frequently accessed values
+- Redis-based rate limiter
 - Transaction-safe quota enforcement
 
 ### Load Test Results
@@ -170,9 +172,8 @@ The API is optimized to handle high concurrency using:
 
 You can also use [Postman](https://www.postman.com/) or cURL to interact with endpoints using the `X-User-id` header.
 
-
+---
 
 ## Author
 
 **Hardik Joshi**
-
