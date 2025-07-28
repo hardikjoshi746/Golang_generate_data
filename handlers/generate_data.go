@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hardikjoshi746/Golang_generate_data/database"
+	"github.com/hardikjoshi746/Golang_generate_data/redis"
 )
 
 func GenerateDataHandler(c *gin.Context) {
@@ -20,11 +21,21 @@ func GenerateDataHandler(c *gin.Context) {
 		return
 	}
 
+	limited, err := redis.RateLimit(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "rate limiter error"})
+		return
+	}
+	if limited {
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": "rate limit exceeded"})
+		return
+	}
+
 	delayMs := rand.Intn(50000) + 100 // 100 to 50000
 	time.Sleep(time.Duration(delayMs) * time.Millisecond)
 
 	// Step 3: Simulate word usage and remaining
-	wordsUsed := int(delayMs / 6) // 15 words per millisecond
+	wordsUsed := int(delayMs / 100) // 1 words per millisecond
 	// wordsLeft := 1000000 - wordsUsed
 
 	// if wordsLeft < 0 {
@@ -55,7 +66,7 @@ func GenerateDataHandler(c *gin.Context) {
 	// 	return
 	// }
 
-	err := database.ProcessUserRequestTx(userID, result, wordsUsed, delayMs)
+	err = database.ProcessUserRequestTx(userID, result, wordsUsed, delayMs)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

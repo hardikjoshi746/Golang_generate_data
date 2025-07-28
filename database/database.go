@@ -2,10 +2,6 @@ package database
 
 import (
 	"fmt"
-	"strconv"
-	"time"
-
-	"github.com/hardikjoshi746/Golang_generate_data/redis"
 )
 
 type UserRequest struct {
@@ -113,26 +109,11 @@ func ProcessUserRequestTx(userID string, result string, wordsUsed int, duration 
 }
 
 func GetUserWordBalance(userID string) (int, error) {
-	// Check Redis cache first
-	cacheKey := "words_left:" + userID
-	val, err := redis.Rdb.Get(redis.Ctx, cacheKey).Result()
-	if err == nil {
-		fmt.Printf("✅ Cache HIT for key: %s, value: %s\n", cacheKey, val)
-		wordsLeft, _ := strconv.Atoi(val)
-		return wordsLeft, nil
-	} else {
-		fmt.Printf("❌ Cache MISS for key: %s, reason: %v\n", cacheKey, err)
-	}
-
-	// Fallback to DB
 	var wordsLeft int
-	err = DB.QueryRow("SELECT words_left FROM users WHERE user_id = ?", userID).Scan(&wordsLeft)
+	err := DB.QueryRow("SELECT words_left FROM users WHERE user_id = ?", userID).Scan(&wordsLeft)
 	if err != nil {
 		return 0, err
 	}
-
-	// Set cache
-	redis.Rdb.Set(redis.Ctx, cacheKey, wordsLeft, time.Minute*5)
 	return wordsLeft, nil
 }
 
@@ -158,7 +139,7 @@ func GetUserRequests(userID int) ([]UserRequest, error) {
 func GetUserStats(userID string) (map[string]interface{}, error) {
 	query := `
 		SELECT u.user_id, u.word_used, u.words_left,
-		       COUNT(r.id) as total_requests,
+		       COUNT(r.request_id) as total_requests,
 		       IFNULL(AVG(r.duration), 0) as avg_duration
 		FROM users u
 		LEFT JOIN requests r ON u.user_id = r.user_id
