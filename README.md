@@ -1,4 +1,4 @@
-# Golang Generate Data API – Manifold Labs Takehome Project
+# Golang Generate Data API 
 
 ## Overview
 
